@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Student Management</title>
+  </head>
+  <body>
+    <h2>Student Management</h2>
+
+    <form id="studentForm">
+      Name: <input type="text" id="name" required /> Age:
+      <input type="number" id="age" required /> Grade:
+      <input type="text" id="grade" required />
+      <button type="submit">Add Student</button>
+    </form>
+
+    <h3>Student List</h3>
+    <table border="1">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Age</th>
+          <th>Grade</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="studentTable"></tbody>
+    </table>
+
+    <script>
+      function fetchStudents() {
+        fetch("students.php")
+          .then((response) => response.json())
+          .then((data) => {
+            let table = document.getElementById("studentTable");
+            table.innerHTML = "";
+            data.forEach((student) => {
+              table.innerHTML += `
+                            <tr>
+                                <td>${student.id}</td>
+                                <td>${student.name}</td>
+                                <td>${student.age}</td>
+                                <td>${student.grade}</td>
+                                <td>
+                                    <button onclick="editStudent(${student.id}, '${student.name}', ${student.age}, '${student.grade}')">Edit</button>
+                                    <button onclick="deleteStudent(${student.id})">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+            });
+          });
+      }
+
+      document.getElementById("studentForm").onsubmit = function (event) {
+        event.preventDefault();
+        let name = document.getElementById("name").value;
+        let age = document.getElementById("age").value;
+        let grade = document.getElementById("grade").value;
+
+        fetch("students.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "add", name, age, grade }),
+        }).then(() => {
+          fetchStudents();
+          document.getElementById("studentForm").reset();
+        });
+      };
+
+      function deleteStudent(id) {
+        fetch("students.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "delete", id }),
+        }).then(() => fetchStudents());
+      }
+
+      function editStudent(id, name, age, grade) {
+        let newName = prompt("Enter new name:", name);
+        let newAge = prompt("Enter new age:", age);
+        let newGrade = prompt("Enter new grade:", grade);
+
+        if (newName && newAge && newGrade) {
+          fetch("students.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              action: "edit",
+              id,
+              name: newName,
+              age: newAge,
+              grade: newGrade,
+            }),
+          }).then(() => fetchStudents());
+        }
+      }
+
+      window.onload = fetchStudents;
+    </script>
+  </body>
+</html>
